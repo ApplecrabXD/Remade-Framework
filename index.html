@@ -3,11 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abstract Flow</title>
+<title>Squircle</title>
 
 <style>
+:root{--background:#fff; --line:#111;}
+@media (prefers-color-scheme: dark){
+  :root{--background:#111; --line:#fff;}
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#fff}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--background);}
+
 #canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
 </head>
@@ -297,41 +303,30 @@ function drawLine(line,time){
         point.x,
         point.y
       );
-
   }
-
   ctx.stroke();
-
 }
 
 // animate
 
-
 function animate(time){
-
   // Smooth movement
   mouse.x+=
     (mouse.targetX-mouse.x)*
     .09;
-
   mouse.y+=
     (mouse.targetY-mouse.y)*
     .09;
 
-  ctx.fillStyle="#fff";
+  ctx.fillStyle=getComputedStyle(document.documentElement)
+  .getPropertyValue("--background");
 
-  ctx.fillRect(
-    0,
-    0,
-    width,
-    height
-  );
+  ctx.fillRect(0, 0, width, height);
 
+  ctx.strokeStyle=getComputedStyle(document.documentElement)
+  .getPropertyValue("--line");
 
-  ctx.strokeStyle="#111";
-  ctx.lineWidth=
-    settings.lineWidth;
-
+  ctx.lineWidth=settings.lineWidth;
   ctx.lineCap="round";
   ctx.lineJoin="round";
 
@@ -341,24 +336,11 @@ function animate(time){
 
   // mouse boundary
   if(mouse.active){
-
     ctx.beginPath();
-
-    ctx.arc(
-      mouse.x,
-      mouse.y,
-      settings.mouseRadius,
-      0,
-      Math.PI*2
-    );
-
-    ctx.strokeStyle=
-      "rgba(0,0,0,.035)";
-
+    ctx.arc(mouse.x, mouse.y, settings.mouseRadius, 0, Math.PI*2);
+    ctx.strokeStyle="rgba(0,0,0,.035)";
     ctx.lineWidth=1;
-
     ctx.stroke();
-
   }
 
   requestAnimationFrame(
