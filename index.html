@@ -34,7 +34,6 @@ let width,height,dpr;
 // Hight and width
 
 function resize(){
-
   width=innerWidth;
   height=innerHeight;
 
@@ -47,7 +46,6 @@ function resize(){
   canvas.style.height=height+"px";
 
   ctx.setTransform(dpr,0,0,dpr,0,0);
-
 }
 
 addEventListener("resize",resize);
@@ -56,7 +54,6 @@ resize();
 // SETTINGS BE VERY CARFULL
 
 const settings={
-
   lineCount:30,        // amount
   pointSpacing:8,      // smoothness
   mouseRadius:120,     // size of mouse
@@ -79,16 +76,12 @@ const mouse={
 };
 
 addEventListener("mousemove",e=>{
-
   mouse.targetX=e.clientX;
   mouse.targetY=e.clientY;
   mouse.active=true;
-
 });
 
-addEventListener("mouseleave",()=>{
-  mouse.active=false;
-});
+addEventListener("mouseleave",()=>{mouse.active=false;});
 
 // lines
 
@@ -99,45 +92,23 @@ function createLines(){
   lines=[];
 
   for(let i=0;i<settings.lineCount;i++){
-
-    // Spread lines evenly across the screen
-    const y=
-      (i/(settings.lineCount-1))*
-      (height+120)-60;
+    // lines across the screen
+    const y=(i/(settings.lineCount-1))*(height+120)-60;
 
     lines.push({
-
       baseY:y,
+      amplitude:15+Math.random()*30,
+      frequency:.0015+Math.random()*.002,
+      speed:.5+Math.random()*1.1,
+      phase:Math.random()*Math.PI*2,
+      seed:Math.random()*10000,
 
-      amplitude:
-        15+
-        Math.random()*30,
+      // stops drawing together (IDK how this works dont touch it lmao)
+      delay:Math.random()*settings.cycleLength,
 
-      frequency:
-        .0015+
-        Math.random()*.002,
-
-      speed:
-        .5+
-        Math.random()*1.1,
-
-      phase:
-        Math.random()*
-        Math.PI*2,
-
-      seed:
-        Math.random()*10000,
-
-      // Prevent everything drawing together
-      delay:
-        Math.random()*
-        settings.cycleLength,
-
-      // Some draw left → right,
-      // others right → left
+      // starting direction
       direction:
         Math.random()>.5
-
     });
 
   }
@@ -149,44 +120,20 @@ createLines();
 // point On Line
 
 function getPoint(line,x,time){
-
   // 1 flow
-  const wave1=
-    Math.sin(
-      x*line.frequency+
-      line.phase+
-      time*
-      settings.movementSpeed*
-      line.speed
-    );
+  const wave1=Math.sin(x*line.frequency+line.phase+time*settings.movementSpeed*line.speed);
 
-    // 2 flow 
-  const wave2=
-    Math.sin(
-      x*.003-
-      time*
-      settings.movementSpeed*.7+
-      line.seed
-    );
+  // 2 flow 
+  const wave2=Math.sin(x*.003-time*settings.movementSpeed*.7+line.seed);
 
-    // 3 flow
-  const wave3=
-    Math.sin(
-      x*.0015+
-      time*
-      settings.movementSpeed*.25
-    );
+  // 3 flow
+  const wave3=Math.sin(x*.0015+time*settings.movementSpeed*.25);
 
-  let y=
-    line.baseY+
-    wave1*line.amplitude+
-    wave2*15+
-    wave3*10;
+  let y=line.baseY+wave1*line.amplitude+wave2*15+wave3*10;
 
   // Mouce Reaction
 
   if(mouse.active){
-
     const dx=x-mouse.x;
     const dy=y-mouse.y;
 
@@ -194,48 +141,26 @@ function getPoint(line,x,time){
       Math.hypot(dx,dy);
 
     if(distance<settings.mouseRadius){
+      const force=1-distance/settings.mouseRadius;
 
-      const force=
-        1-
-        distance/
-        settings.mouseRadius;
+      const angle=Math.atan2(dy,dx);
 
-      const angle=
-        Math.atan2(dy,dx);
+      const push=force*settings.mouseRadius*settings.mouseForce;
 
-      const push=
-        force*
-        settings.mouseRadius*
-        settings.mouseForce;
-
-      y+=
-        Math.sin(angle)*
-        push;
-
+      // what the fuck why dose this work
+      y+=Math.sin(angle)*push;
     }
-
   }
-
   return{x,y};
-
 }
 
 // draw then erase
 
 function getProgress(line,time){
-
-  const local=
-    (time+line.delay)%
-    settings.cycleLength;
-
-  const draw=
-    settings.cycleLength*.35;
-
-  const hold=
-    settings.cycleLength*.12;
-
-  const erase=
-    settings.cycleLength*.35;
+  const local=(time+line.delay)%settings.cycleLength;
+  const draw=settings.cycleLength*.35;
+  const hold=settings.cycleLength*.12;
+  const erase=settings.cycleLength*.35;
 
   // drawing
   if(local<draw)
@@ -248,61 +173,34 @@ function getProgress(line,time){
   // erase
   if(local<draw+hold+erase)
     return 1-
-      (local-draw-hold)/
-      erase;
+      (local-draw-hold)/erase;
 
   return 0;
-
 }
 
 // draw each line
 
 function drawLine(line,time){
-
   const progress=
     getProgress(line,time);
 
   if(progress<=0)return;
 
-  const total=
-    Math.ceil(
-      width/
-      settings.pointSpacing
-    );
-
-  const visible=
-    Math.floor(
-      total*progress
-    );
+  const total=Math.ceil(width/settings.pointSpacing);
+  const visible=Math.floor(total*progress);
 
   if(visible<2)return;
 
   ctx.beginPath();
 
   for(let i=0;i<visible;i++){
-
-    const x=
-      line.direction
-        ? i*settings.pointSpacing
-        : width-i*settings.pointSpacing;
-
-    const point=
-      getPoint(
-        line,
-        x,
-        time
-      );
+    const x=line.direction ? i*settings.pointSpacing : width-i*settings.pointSpacing;
+    const point=getPoint(line,x,time);
 
     if(i===0)
-      ctx.moveTo(
-        point.x,
-        point.y
-      );
+      ctx.moveTo(point.x, point.y);
     else
-      ctx.lineTo(
-        point.x,
-        point.y
-      );
+      ctx.lineTo(point.x, point.y);
   }
   ctx.stroke();
 }
@@ -312,24 +210,16 @@ function drawLine(line,time){
 function animate(time){
   // Smooth movement
   mouse.x+=
-    (mouse.targetX-mouse.x)*
-    .09;
+    (mouse.targetX-mouse.x)*.09;
   mouse.y+=
-    (mouse.targetY-mouse.y)*
-    .09;
+    (mouse.targetY-mouse.y)*.09;
 
-  ctx.fillStyle=getComputedStyle(document.documentElement)
-  .getPropertyValue("--background");
-
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--background");
   ctx.fillRect(0, 0, width, height);
-
-  ctx.strokeStyle=getComputedStyle(document.documentElement)
-  .getPropertyValue("--line");
-
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--line");
   ctx.lineWidth=settings.lineWidth;
   ctx.lineCap="round";
   ctx.lineJoin="round";
-
 
   for(const line of lines)
     drawLine(line,time);
@@ -342,16 +232,10 @@ function animate(time){
     ctx.lineWidth=1;
     ctx.stroke();
   }
-
-  requestAnimationFrame(
-    animate
-  );
-
+  requestAnimationFrame(animate);
 }
 
-requestAnimationFrame(
-  animate
-);
+requestAnimationFrame(animate);
 
 })();
 </script>
